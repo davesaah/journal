@@ -1,9 +1,13 @@
 <script setup>
-import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useJournal } from '../composables/useJournal'
-import Card from '../components/ui/Card.vue'
-import Button from '../components/ui/Button.vue'
+import { 
+  Card, 
+  CardHeader, 
+  CardTitle, 
+  CardContent 
+} from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 
 const router = useRouter()
 const { entries } = useJournal()
@@ -28,124 +32,50 @@ const openEntry = (id) => {
 </script>
 
 <template>
-  <div class="home-container">
-    <header class="header">
+  <div class="container max-w-5xl mx-auto py-12 px-4">
+    <header class="flex justify-between items-center mb-12">
       <div>
-        <h1 class="title">My Journal</h1>
-        <p class="subtitle">Capture your thoughts, ideas, and memories.</p>
+        <h1 class="text-4xl font-bold tracking-tight mb-2 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+          My Journal
+        </h1>
+        <p class="text-muted-foreground text-lg">
+          Capture your thoughts, ideas, and memories.
+        </p>
       </div>
-      <Button @click="createNewEntry" size="lg">New Entry</Button>
+      <Button @click="createNewEntry" size="lg" class="shadow-lg hover:shadow-xl transition-all">
+        New Entry
+      </Button>
     </header>
 
-    <div v-if="entries.length === 0" class="empty-state">
-      <div class="empty-content">
-        <h3>No entries yet</h3>
-        <p>Start writing your first journal entry today.</p>
+    <div v-if="entries.length === 0" class="flex flex-col items-center justify-center min-h-[400px] text-center border-2 border-dashed rounded-lg bg-muted/30">
+      <div class="max-w-md space-y-4">
+        <h3 class="text-2xl font-semibold">No entries yet</h3>
+        <p class="text-muted-foreground">Start writing your first journal entry today.</p>
         <Button variant="secondary" @click="createNewEntry">Create Entry</Button>
       </div>
     </div>
 
-    <div v-else class="entries-grid">
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <Card 
         v-for="entry in entries" 
         :key="entry.id" 
-        class="entry-card"
+        class="group cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-muted"
         @click="openEntry(entry.id)"
       >
-        <div class="card-content">
-          <span class="date">{{ formatDate(entry.date) }}</span>
-          <h2 class="entry-title">{{ entry.title || 'Untitled Entry' }}</h2>
-          <p class="preview">{{ truncate(entry.content) }}</p>
-        </div>
+        <CardHeader class="pb-2">
+          <span class="text-xs font-medium text-primary mb-1 block">
+            {{ formatDate(entry.date) }}
+          </span>
+          <CardTitle class="text-xl group-hover:text-primary transition-colors">
+            {{ entry.title || 'Untitled Entry' }}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p class="text-muted-foreground line-clamp-3 leading-relaxed">
+            {{ truncate(entry.content) }}
+          </p>
+        </CardContent>
       </Card>
     </div>
   </div>
 </template>
-
-<style scoped>
-.home-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: var(--space-xl) var(--space-md);
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-xl);
-}
-
-.title {
-  font-size: 2.5rem;
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-main);
-  background: linear-gradient(135deg, var(--color-primary) 0%, #a855f7 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin-bottom: var(--space-xs);
-}
-
-.subtitle {
-  color: var(--color-text-muted);
-  font-size: 1.125rem;
-}
-
-.empty-state {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 400px;
-  text-align: center;
-  background-color: var(--color-surface);
-  border-radius: var(--radius-lg);
-  border: 2px dashed var(--color-border);
-}
-
-.empty-content h3 {
-  margin-bottom: var(--space-sm);
-  color: var(--color-text-main);
-}
-
-.empty-content p {
-  margin-bottom: var(--space-lg);
-  color: var(--color-text-muted);
-}
-
-.entries-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: var(--space-lg);
-}
-
-.entry-card {
-  cursor: pointer;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.card-content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
-
-.date {
-  font-size: 0.875rem;
-  color: var(--color-primary);
-  font-weight: var(--font-weight-medium);
-}
-
-.entry-title {
-  font-size: 1.25rem;
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-main);
-  line-height: 1.4;
-}
-
-.preview {
-  color: var(--color-text-muted);
-  line-height: 1.6;
-}
-</style>

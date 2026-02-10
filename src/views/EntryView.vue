@@ -2,7 +2,8 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useJournal } from '../composables/useJournal'
-import Button from '../components/ui/Button.vue'
+import { Button } from '@/components/ui/button'
+import { ArrowLeft, Trash2, Edit } from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
@@ -33,75 +34,32 @@ const goBack = () => {
 </script>
 
 <template>
-  <div v-if="entry" class="entry-container">
-    <header class="entry-header">
-      <Button variant="ghost" @click="goBack" class="back-btn">
-        &larr; Back
+  <div v-if="entry" class="container max-w-3xl mx-auto py-12 px-4">
+    <header class="flex justify-between items-center mb-8">
+      <Button variant="ghost" @click="goBack" class="gap-2 pl-0 hover:pl-2 transition-all">
+        <ArrowLeft class="w-4 h-4" /> Back
       </Button>
-      <div class="actions">
-        <Button variant="danger" @click="deleteAndRedirect" size="sm">Delete</Button>
-        <Button @click="editEntry">Edit</Button>
+      <div class="flex gap-2">
+        <Button variant="destructive" size="sm" @click="deleteAndRedirect" class="gap-2">
+          <Trash2 class="w-4 h-4" /> Delete
+        </Button>
+        <Button variant="outline" size="sm" @click="editEntry" class="gap-2">
+          <Edit class="w-4 h-4" /> Edit
+        </Button>
       </div>
     </header>
 
-    <article class="entry-content">
-      <h1 class="title">{{ entry.title || 'Untitled Entry' }}</h1>
-      <time class="date">{{ formatDate(entry.date) }}</time>
-      <div class="body">
+    <article class="prose dark:prose-invert lg:prose-xl max-w-none">
+      <h1 class="mb-2 text-4xl font-extrabold tracking-tight">{{ entry.title || 'Untitled Entry' }}</h1>
+      <time class="block text-muted-foreground mb-8 text-lg">{{ formatDate(entry.date) }}</time>
+      <div class="whitespace-pre-wrap leading-relaxed text-foreground">
         {{ entry.content }}
       </div>
     </article>
   </div>
-  <div v-else class="not-found">
-    <p>Entry not found.</p>
+  
+  <div v-else class="flex flex-col items-center justify-center min-h-[50vh] text-center">
+    <h3 class="text-xl font-semibold mb-2">Entry not found</h3>
     <Button @click="goBack">Go Back</Button>
   </div>
 </template>
-
-<style scoped>
-.entry-container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: var(--space-xl) var(--space-md);
-}
-
-.entry-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-xl);
-}
-
-.title {
-  font-size: 2.5rem;
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-main);
-  margin-bottom: var(--space-sm);
-  line-height: 1.2;
-}
-
-.date {
-  display: block;
-  font-size: 1rem;
-  color: var(--color-text-muted);
-  margin-bottom: var(--space-xl);
-  font-weight: var(--font-weight-medium);
-}
-
-.body {
-  font-size: 1.125rem;
-  line-height: 1.8;
-  color: var(--color-text-main);
-  white-space: pre-wrap;
-}
-
-.not-found {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 50vh;
-  gap: var(--space-md);
-  color: var(--color-text-muted);
-}
-</style>
