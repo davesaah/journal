@@ -1,12 +1,13 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useJournal } from '../composables/useJournal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { ArrowLeft, Save } from 'lucide-vue-next'
+import { ArrowLeft, Save, Eye, EyeOff } from 'lucide-vue-next'
+import { marked } from 'marked'
 
 const route = useRoute()
 const router = useRouter()
@@ -14,11 +15,23 @@ const { addEntry, getEntry, updateEntry } = useJournal()
 
 const isEditing = ref(false)
 const entryId = ref(null)
+const showPreview = ref(true)
 
 const form = ref({
   title: '',
   content: '',
   date: new Date().toISOString().split('T')[0] 
+})
+
+// Configure marked for better rendering
+marked.setOptions({
+  breaks: true,
+  gfm: true,
+})
+
+const markdownPreview = computed(() => {
+  if (!form.value.content) return '<p class="text-muted-foreground">Start writing to see the preview...</p>'
+  return marked(form.value.content)
 })
 
 onMounted(() => {
@@ -48,20 +61,30 @@ const save = () => {
 const cancel = () => {
   router.back()
 }
+
+const togglePreview = () => {
+  showPreview.value = !showPreview.value
+}
 </script>
 
 <template>
-  <div class="container max-w-4xl mx-auto py-8 px-4 h-[calc(100vh-2rem)] flex flex-col">
+  <div class="container max-w-6xl mx-auto py-8 px-4 h-[calc(100vh-2rem)] flex flex-col">
     <header class="flex justify-between items-center mb-6">
       <Button variant="ghost" @click="cancel" class="gap-2 pl-0">
         <ArrowLeft class="w-4 h-4" /> Back
       </Button>
-      <Button @click="save" class="gap-2">
-        <Save class="w-4 h-4" /> Save
-      </Button>
+      <div class="flex gap-2">
+        <Button variant="outline" @click="togglePreview" class="gap-2" size="sm">
+          <component :is="showPreview ? EyeOff : Eye" class="w-4 h-4" />
+          {{ showPreview ? 'Hide' : 'Show' }} Preview
+        </Button>
+        <Button @click="save" class="gap-2">
+          <Save class="w-4 h-4" /> Save
+        </Button>
+      </div>
     </header>
     
-    <div class="space-y-6 flex-1 flex flex-col">
+    <div class="space-y-4 flex-1 flex flex-col overflow-hidden">
       <div class="grid gap-4">
         <Input 
           v-model="form.title" 
@@ -79,11 +102,92 @@ const cancel = () => {
         </div>
       </div>
 
-      <Textarea 
-        v-model="form.content" 
-        placeholder="What's on your mind today?" 
-        class="flex-1 resize-none border-none p-0 shadow-none focus-visible:ring-0 text-lg leading-relaxed"
-      />
+      <div class="flex-1 grid gap-4 overflow-hidden" :class="showPreview ? 'md:grid-cols-2' : 'grid-cols-1'">
+        <!-- Editor Pane -->
+        <div class="flex flex-col overflow-hidden">
+          <div class="text-xs font-medium text-muted-foreground mb-2 px-2">Editor (Markdown)</div>
+          <Textarea 
+            v-model="form.content" 
+            placeholder="Start writing in markdown...
+
+**Bold text** or *italic*
+- Bullet lists
+1. Numbered lists
+# Headings
+
+[Links](url) and more!" 
+            class="flex-1 resize-none border rounded-lg p-4 focus-visible:ring-2 text-base leading-relaxed font-mono"
+          />
+        </div>
+
+        <!-- Preview Pane -->
+        <div v-if="showPreview" class="flex flex-col overflow-hidden">
+          <div class="text-xs font-medium text-muted-foreground mb-2 px-2">Preview</div>
+          <div 
+            class="flex-1 border rounded-lg p-4 overflow-auto prose prose-sm dark:prose-invert max-w-none"
+            v-html="markdownPreview"
+          />
+        </div>
+      </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Custom prose styling for markdown preview */
+:deep(.prose) {
+  color: hsl(var(--foreground));
+}
+
+:deep(.prose h1),
+:deep(.prose h2),
+:deep(.prose h3),
+:deep(.prose h4) {
+  color: hsl(var(--foreground));
+  font-weight: 700;
+}
+
+:deep(.prose h1) {
+  font-size: 1.875rem;
+  margin-top: 0;
+}
+
+:deep(.prose h2) {
+  font-size: 1.5rem;
+}
+
+:deep(.prose a) {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+}
+
+:deep(.prose code) {
+  background: hsl(var(--muted));
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+}
+
+:deep(.prose pre) {
+  background: hsl(var(--muted));
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+}
+
+:deep(.prose blockquote) {
+  border-left: 4px solid hsl(var(--primary));
+  padding-left: 1rem;
+  font-style: italic;
+  color: hsl(var(--muted-foreground));
+}
+
+:deep(.prose ul),
+:deep(.prose ol) {
+  padding-left: 1.5rem;
+}
+
+:deep(.prose hr) {
+  border-color: hsl(var(--border));
+}
+</style>
