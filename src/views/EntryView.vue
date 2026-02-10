@@ -25,7 +25,14 @@ const renderedContent = computed(() => {
 
 const formatDate = (dateString) => {
   if (!dateString) return ''
-  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }
+  const options = { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  }
   return new Date(dateString).toLocaleDateString(undefined, options)
 }
 
@@ -163,6 +170,20 @@ const goBack = () => {
 :deep(.prose ol) {
   padding-left: 2rem;
   margin-bottom: 1.25rem;
+}
+
+:deep(.prose ul) {
+  list-style-type: disc;
+}
+
+:deep(.prose ul li::marker) {
+  color: hsl(var(--primary));
+  font-weight: bold;
+}
+
+:deep(.prose ol li::marker) {
+  color: hsl(var(--primary));
+  font-weight: 600;
 }
 
 :deep(.prose li) {

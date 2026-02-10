@@ -8,6 +8,7 @@ import {
   CardContent 
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Calendar, BookOpen } from 'lucide-vue-next'
 
 const router = useRouter()
 const { entries } = useJournal()
@@ -59,22 +60,23 @@ const openEntry = (id) => {
       <Card 
         v-for="entry in entries" 
         :key="entry.id" 
-        class="group cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-muted"
+        class="group cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-muted overflow-hidden"
         @click="openEntry(entry.id)"
       >
-        <CardHeader class="pb-2">
-          <span class="text-xs font-medium text-primary mb-1 block">
-            {{ formatDate(entry.date) }}
-          </span>
-          <CardTitle class="text-xl group-hover:text-primary transition-colors">
-            {{ entry.title || 'Untitled Entry' }}
-          </CardTitle>
+        <CardHeader class="space-y-3">
+          <div class="flex items-center gap-2 text-xs text-muted-foreground">
+            <Calendar class="w-3.5 h-3.5" />
+            <span>{{ formatDate(entry.date) }}</span>
+          </div>
+          <div class="flex items-start gap-3">
+            <div class="mt-1 text-primary/80">
+              <BookOpen class="w-5 h-5" />
+            </div>
+            <CardTitle class="text-xl group-hover:text-primary transition-colors leading-tight">
+              {{ entry.title || 'Untitled Entry' }}
+            </CardTitle>
+          </div>
         </CardHeader>
-        <CardContent>
-          <p class="text-muted-foreground line-clamp-3 leading-relaxed">
-            {{ truncate(entry.content) }}
-          </p>
-        </CardContent>
       </Card>
     </div>
   </div>

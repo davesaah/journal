@@ -20,7 +20,7 @@ const showPreview = ref(true)
 const form = ref({
   title: '',
   content: '',
-  date: new Date().toISOString().split('T')[0] 
+  date: new Date().toISOString().slice(0, 16)
 })
 
 // Configure marked for better rendering
@@ -95,7 +95,7 @@ const togglePreview = () => {
            <Label for="date" class="sr-only">Date</Label>
            <Input 
               id="date" 
-              type="date" 
+              type="datetime-local" 
               v-model="form.date" 
               class="w-auto border-none shadow-none px-0 focus-visible:ring-0 text-sm h-8" 
             />
@@ -185,6 +185,25 @@ const togglePreview = () => {
 :deep(.prose ul),
 :deep(.prose ol) {
   padding-left: 1.5rem;
+}
+
+:deep(.prose ul) {
+  list-style-type: disc;
+}
+
+:deep(.prose ul li) {
+  position: relative;
+  padding-left: 0.5rem;
+}
+
+:deep(.prose ul li::marker) {
+  color: hsl(var(--primary));
+  font-weight: bold;
+}
+
+:deep(.prose ol li::marker) {
+  color: hsl(var(--primary));
+  font-weight: 600;
 }
 
 :deep(.prose hr) {
