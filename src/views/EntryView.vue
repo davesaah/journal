@@ -1,16 +1,24 @@
 <script setup>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useJournal } from '../composables/useJournal'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Trash2, Edit } from 'lucide-vue-next'
+import { Textarea } from '@/components/ui/textarea'
+import { 
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent
+} from '@/components/ui/card'
+import { ArrowLeft, Trash2, MessageSquare, Send } from 'lucide-vue-next'
 import { marked } from 'marked'
 
 const route = useRoute()
 const router = useRouter()
-const { getEntry, deleteEntry } = useJournal()
+const { getEntry, deleteEntry, addAfterthought } = useJournal()
 
 const entry = computed(() => getEntry(route.params.id))
+const newThought = ref('')
 
 // Configure marked for better rendering
 marked.setOptions({
@@ -36,8 +44,25 @@ const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString(undefined, options)
 }
 
-const editEntry = () => {
-  router.push(`/entry/${entry.value.id}/edit`)
+const formatThoughtDate = (dateString) => {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffMs = now - date
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  const diffDays = Math.floor(diffMs / 86400000)
+  
+  if (diffMins < 1) return 'just now'
+  if (diffMins < 60) return `${diffMins}m ago`
+  if (diffHours < 24) return `${diffHours}h ago`
+  if (diffDays < 7) return `${diffDays}d ago`
+  
+  return new Date(dateString).toLocaleDateString(undefined, { 
+    month: 'short', 
+    day: 'numeric',
+    year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+  })
 }
 
 const deleteAndRedirect = () => {
@@ -50,6 +75,14 @@ const deleteAndRedirect = () => {
 const goBack = () => {
   router.back()
 }
+
+const submitThought = () => {
+  if (!newThought.value.trim()) return
+  addAfterthought(entry.value.id, newThought.value.trim())
+  newThought.value = ''
+}
+
+
 </script>
 
 <template>
@@ -58,17 +91,12 @@ const goBack = () => {
       <Button variant="ghost" @click="goBack" class="gap-2 pl-0 hover:pl-2 transition-all">
         <ArrowLeft class="w-4 h-4" /> Back
       </Button>
-      <div class="flex gap-2">
-        <Button variant="destructive" size="sm" @click="deleteAndRedirect" class="gap-2">
-          <Trash2 class="w-4 h-4" /> Delete
-        </Button>
-        <Button variant="outline" size="sm" @click="editEntry" class="gap-2">
-          <Edit class="w-4 h-4" /> Edit
-        </Button>
-      </div>
+      <Button variant="destructive" size="sm" @click="deleteAndRedirect" class="gap-2">
+        <Trash2 class="w-4 h-4" /> Delete
+      </Button>
     </header>
 
-    <article>
+    <article class="mb-12">
       <h1 class="mb-2 text-4xl font-extrabold tracking-tight">{{ entry.title || 'Untitled Entry' }}</h1>
       <time class="block text-muted-foreground mb-8 text-lg">{{ formatDate(entry.date) }}</time>
       <div 
@@ -76,6 +104,52 @@ const goBack = () => {
         v-html="renderedContent"
       />
     </article>
+
+    <!-- AfterThoughts Section -->
+    <div class="border-t border-border pt-8">
+      <div class="flex items-center gap-2 mb-6">
+        <MessageSquare class="w-5 h-5 text-primary" />
+        <h2 class="text-2xl font-bold">AfterThoughts</h2>
+      </div>
+
+      <!-- Existing Thoughts -->
+      <div v-if="entry.afterthoughts && entry.afterthoughts.length > 0" class="space-y-4 mb-6">
+        <Card 
+          v-for="thought in entry.afterthoughts" 
+          :key="thought.id"
+          class="border-l-4 border-l-primary/50"
+        >
+          <CardContent class="pt-4">
+            <div>
+              <p class="text-sm leading-relaxed whitespace-pre-wrap">{{ thought.content }}</p>
+              <p class="text-xs text-muted-foreground mt-2">{{ formatThoughtDate(thought.createdAt) }}</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div v-else class="text-center py-8 text-muted-foreground">
+        <MessageSquare class="w-12 h-12 mx-auto mb-2 opacity-50" />
+        <p>No afterthoughts yet. Add your reflections below.</p>
+      </div>
+
+      <!-- Add New Thought -->
+      <div class="space-y-3">
+        <Textarea 
+          v-model="newThought" 
+          placeholder="Add an afterthought or reflection..."
+          class="min-h-[100px] resize-none"
+          @keydown.ctrl.enter="submitThought"
+          @keydown.meta.enter="submitThought"
+        />
+        <div class="flex justify-between items-center">
+          <p class="text-xs text-muted-foreground">Ctrl/Cmd + Enter to submit</p>
+          <Button @click="submitThought" class="gap-2" :disabled="!newThought.trim()">
+            <Send class="w-4 h-4" /> Add Thought
+          </Button>
+        </div>
+      </div>
+    </div>
   </div>
   
   <div v-else class="flex flex-col items-center justify-center min-h-[50vh] text-center">

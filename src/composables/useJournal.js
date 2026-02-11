@@ -53,11 +53,35 @@ export function useJournal() {
     return entries.value.find(e => e.id === id)
   }
 
+  const addAfterthought = (entryId, thought) => {
+    const index = entries.value.findIndex(e => e.id === entryId)
+    if (index !== -1) {
+      if (!entries.value[index].afterthoughts) {
+        entries.value[index].afterthoughts = []
+      }
+      entries.value[index].afterthoughts.push({
+        id: crypto.randomUUID(),
+        content: thought,
+        createdAt: new Date().toISOString()
+      })
+    }
+  }
+
+  const deleteAfterthought = (entryId, thoughtId) => {
+    const index = entries.value.findIndex(e => e.id === entryId)
+    if (index !== -1 && entries.value[index].afterthoughts) {
+      entries.value[index].afterthoughts = entries.value[index].afterthoughts.filter(
+        t => t.id !== thoughtId
+      )
+    }
+  }
+
   return {
     entries,
     addEntry,
     updateEntry,
     deleteEntry,
-    getEntry
+    getEntry,
+    addAfterthought
   }
 }
