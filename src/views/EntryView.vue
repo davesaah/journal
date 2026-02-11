@@ -136,24 +136,24 @@ const formatActions = [
 </script>
 
 <template>
-  <div v-if="entry" class="container max-w-4xl mx-auto py-12 px-4 animate-in fade-in duration-700">
-    <header class="flex justify-between items-center mb-12">
+  <div v-if="entry" class="container max-w-4xl mx-auto py-6 md:py-12 px-4 animate-in fade-in duration-700">
+    <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 md:mb-12">
       <Button variant="ghost" @click="goBack" class="gap-2 pl-0 hover:pl-2 transition-all group">
         <ArrowLeft class="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Journal
       </Button>
-      <Button v-if="canEdit" variant="outline" @click="editEntry" class="gap-2 border-primary/20 hover:bg-primary/5 shadow-sm">
+      <Button v-if="canEdit" variant="outline" @click="editEntry" class="w-full sm:w-auto gap-2 border-primary/20 hover:bg-primary/5 shadow-sm h-10 md:h-11">
         <Edit3 class="w-4 h-4" /> Edit Entry
       </Button>
     </header>
 
-    <article class="mb-16">
-      <div class="space-y-6 mb-10">
-        <div class="flex items-start justify-between gap-4">
-          <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight leading-tight flex-1 bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/70">
+    <article class="mb-12 md:mb-16">
+      <div class="space-y-4 md:space-y-6 mb-8 md:mb-10">
+        <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+          <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-tight flex-1 bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/70">
             {{ entry.title || 'Untitled Entry' }}
           </h1>
           <span 
-            class="mt-2 text-[10px] uppercase tracking-widest px-3 py-1 rounded-full font-bold border"
+            class="self-start text-[10px] uppercase tracking-widest px-3 py-1 rounded-full font-bold border"
             :class="canEdit 
               ? 'bg-primary/10 text-primary border-primary/20 shadow-sm shadow-primary/5' 
               : 'bg-muted text-muted-foreground border-transparent'"
@@ -161,38 +161,38 @@ const formatActions = [
             {{ entry.author_name || 'Anonymous' }}
           </span>
         </div>
-        <time class="flex items-center gap-2 text-muted-foreground font-medium">
+        <time class="flex items-center gap-2 text-muted-foreground font-medium text-sm md:text-base">
           <span class="w-1.5 h-1.5 rounded-full bg-primary" />
           {{ formatDate(entry.created_at) }}
         </time>
       </div>
 
       <div 
-        class="prose prose-xl dark:prose-invert max-w-none leading-relaxed text-foreground/90 selection:bg-primary/20"
+        class="prose prose-lg md:prose-xl dark:prose-invert max-w-none leading-relaxed text-foreground/90 selection:bg-primary/20 break-words"
         v-html="renderedContent"
       />
     </article>
 
     <!-- AfterThoughts Section -->
-    <section class="border-t border-primary/10 pt-12">
-      <div class="flex items-center gap-3 mb-8">
+    <section class="border-t border-primary/10 pt-8 md:pt-12 pb-12">
+      <div class="flex items-center gap-3 mb-6 md:mb-8">
         <div class="p-2 rounded-lg bg-primary/10">
           <MessageSquare class="w-5 h-5 text-primary" />
         </div>
-        <h2 class="text-2xl font-bold tracking-tight">AfterThoughts</h2>
+        <h2 class="text-xl md:text-2xl font-bold tracking-tight">AfterThoughts</h2>
       </div>
 
       <!-- Existing Thoughts -->
-      <div v-if="entry.afterthoughts && entry.afterthoughts.length > 0" class="space-y-6 mb-10">
+      <div v-if="entry.afterthoughts && entry.afterthoughts.length > 0" class="space-y-4 md:space-y-6 mb-8 md:mb-10">
         <Card 
           v-for="thought in entry.afterthoughts" 
           :key="thought.id"
           class="border-none bg-muted/30 backdrop-blur-sm relative overflow-hidden group hover:bg-muted/40 transition-colors"
         >
           <div class="absolute left-0 top-0 bottom-0 w-1 bg-primary/30 group-hover:bg-primary transition-colors" />
-          <CardContent class="py-6 px-8">
-            <div class="prose prose-lg dark:prose-invert max-w-none text-foreground/80 leading-relaxed italic" v-html="marked(thought.content)" />
-            <div class="flex items-center gap-2 mt-4 text-xs font-bold uppercase tracking-widest text-muted-foreground/40">
+          <CardContent class="py-4 px-6 md:py-6 md:px-8">
+            <div class="prose md:prose-lg dark:prose-invert max-w-none text-foreground/80 leading-relaxed italic text-sm md:text-base" v-html="marked(thought.content)" />
+            <div class="flex items-center gap-2 mt-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40">
                <span>— {{ formatThoughtDate(thought.created_at) }}</span>
             </div>
           </CardContent>
@@ -211,7 +211,7 @@ const formatActions = [
             class="h-9 w-9 p-0 hover:bg-primary/10 hover:text-primary transition-colors"
             :title="action.label"
           >
-            <component :is="action.icon" class="w-4.5 h-4.5" />
+            <component :is="action.icon" class="w-4 h-4" />
           </Button>
         </div>
 
@@ -219,39 +219,39 @@ const formatActions = [
           id="afterthought-editor"
           v-model="newThought" 
           placeholder="Reflect on this entry..."
-          class="min-h-[120px] resize-none font-sans text-lg border-none focus-visible:ring-1 focus-visible:ring-primary/20 bg-muted/10 rounded-2xl p-6"
+          class="min-h-[120px] resize-none font-sans text-base md:text-lg border-none focus-visible:ring-1 focus-visible:ring-primary/20 bg-muted/10 rounded-2xl p-5 md:p-6"
           @keydown.ctrl.enter="submitThought"
           @keydown.meta.enter="submitThought"
         />
-        <div class="flex justify-between items-center">
-          <p class="text-xs font-medium text-muted-foreground/50 italic px-2">Ctrl + Enter to submit</p>
-          <Button @click="submitThought" class="gap-2 px-6 h-11 rounded-full shadow-lg shadow-primary/10" :disabled="!newThought.trim() || isSubmitting">
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+          <p class="hidden sm:block text-xs font-medium text-muted-foreground/50 italic px-2">Ctrl + Enter to submit</p>
+          <Button @click="submitThought" class="w-full sm:w-auto gap-2 px-8 h-12 rounded-full shadow-lg shadow-primary/10 font-bold" :disabled="!newThought.trim() || isSubmitting">
             <component :is="isSubmitting ? Loader2 : Send" class="w-4 h-4" :class="isSubmitting ? 'animate-spin' : ''" />
             Add Thought
           </Button>
         </div>
       </div>
       
-      <div v-else-if="!entry.afterthoughts || entry.afterthoughts.length === 0" class="text-center py-12 text-muted-foreground/40 italic">
+      <div v-else-if="!entry.afterthoughts || entry.afterthoughts.length === 0" class="text-center py-12 text-muted-foreground/40 italic text-sm">
         No afterthoughts have been shared yet.
       </div>
     </section>
   </div>
   
-  <div v-else-if="loading" class="flex flex-col items-center justify-center min-h-[70vh]">
+  <div v-else-if="loading" class="flex flex-col items-center justify-center min-h-[70vh] p-4 text-center">
     <Loader2 class="w-12 h-12 text-primary animate-spin mb-4" />
     <p class="text-muted-foreground animate-pulse">Gathering memories...</p>
   </div>
 
-  <div v-else class="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-6">
+  <div v-else class="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-6 p-4">
     <div class="p-6 rounded-full bg-destructive/5 text-destructive">
        <ArrowLeft class="w-12 h-12" />
     </div>
     <div class="space-y-2">
-      <h3 class="text-2xl font-bold">Entry not found</h3>
-      <p class="text-muted-foreground">The entry you're looking for might have been removed or moved.</p>
+      <h3 class="text-xl md:text-2xl font-bold">Entry not found</h3>
+      <p class="text-muted-foreground text-sm md:text-base">The entry you're looking for might have been removed or moved.</p>
     </div>
-    <Button size="lg" @click="goBack" variant="outline" class="px-8">Return to Journal</Button>
+    <Button size="lg" @click="goBack" variant="outline" class="w-full sm:w-auto px-8">Return to Journal</Button>
   </div>
 </template>
 

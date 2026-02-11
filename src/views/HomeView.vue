@@ -41,25 +41,25 @@ const getUserDisplayName = (user) => {
 </script>
 
 <template>
-  <div class="container max-w-6xl mx-auto py-8 px-4">
-    <header class="mb-12">
-      <div class="flex items-center justify-between mb-6">
+  <div class="container max-w-6xl mx-auto py-6 md:py-8 px-4">
+    <header class="mb-8 md:mb-12">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
         <div>
-          <h1 class="text-4xl font-extrabold tracking-tight mb-2 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60">
+          <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-2 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60">
             Journal
           </h1>
-          <p class="text-muted-foreground font-medium tracking-tight">
+          <p class="text-muted-foreground text-sm md:text-base font-medium tracking-tight">
             Welcome back, <span class="text-foreground">{{ getUserDisplayName(currentUser) }}</span>!
           </p>
         </div>
-        <div class="flex items-center gap-3">
-          <Button @click="createNewEntry" size="lg" class="gap-2 shadow-lg shadow-primary/20">
-            <BookOpen class="w-5 h-5" />
-            New Entry
+        <div class="flex items-center gap-2 sm:gap-3">
+          <Button @click="createNewEntry" class="flex-1 sm:flex-none gap-2 shadow-lg shadow-primary/20 h-11 md:h-12 px-4 md:px-6">
+            <BookOpen class="w-4 h-4 md:w-5 md:h-5" />
+            <span class="text-sm md:text-base">New Entry</span>
           </Button>
-          <Button @click="handleLogout" variant="outline" size="lg" class="gap-2 border-primary/20 hover:bg-primary/5">
+          <Button @click="handleLogout" variant="outline" class="gap-2 border-primary/20 hover:bg-primary/5 h-11 md:h-12 px-4 md:px-6">
             <LogOut class="w-4 h-4" />
-            Logout
+            <span class="hidden sm:inline text-sm md:text-base">Logout</span>
           </Button>
         </div>
       </div>

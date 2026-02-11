@@ -43,19 +43,21 @@ const handleKeyPress = (e) => {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-background p-4">
-    <Card class="w-full max-w-md border-primary/20 bg-card/50 backdrop-blur-sm shadow-2xl shadow-primary/5">
-      <CardHeader class="space-y-4 text-center">
+  <div class="min-h-screen flex items-center justify-center bg-background p-4 sm:p-6">
+    <Card class="w-full max-w-[420px] border-primary/20 bg-card/50 backdrop-blur-sm shadow-2xl shadow-primary/5">
+      <CardHeader class="space-y-4 text-center py-8">
         <div class="flex justify-center">
-          <div class="p-4 rounded-full bg-primary/10 ring-1 ring-primary/20">
-            <BookOpen class="w-12 h-12 text-primary" />
+          <div class="p-4 rounded-3xl bg-primary/10 ring-1 ring-primary/20">
+            <BookOpen class="w-10 h-10 md:w-12 md:h-12 text-primary" />
           </div>
         </div>
-        <CardTitle class="text-3xl font-bold tracking-tight">Welcome Back</CardTitle>
-        <p class="text-muted-foreground italic">Your digital sanctuary awaits.</p>
+        <div class="space-y-1">
+          <CardTitle class="text-2xl md:text-3xl font-extrabold tracking-tight">Welcome Back</CardTitle>
+          <p class="text-muted-foreground text-sm italic">Your digital sanctuary awaits.</p>
+        </div>
       </CardHeader>
       
-      <CardContent class="space-y-6">
+      <CardContent class="space-y-6 pb-10">
         <!-- Email Input -->
         <div class="space-y-2">
           <Label for="email" class="flex items-center gap-2 text-sm font-medium">
