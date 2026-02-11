@@ -10,7 +10,7 @@ import {
   CardTitle,
   CardContent
 } from '@/components/ui/card'
-import { ArrowLeft, MessageSquare, Send } from 'lucide-vue-next'
+import { ArrowLeft, MessageSquare, Send, Bold, Italic, Heading1, Heading2, List, ListOrdered, Link, Quote } from 'lucide-vue-next'
 import { marked } from 'marked'
 
 const route = useRoute()
@@ -75,6 +75,54 @@ const submitThought = () => {
   newThought.value = ''
 }
 
+// Formatting functions for afterthoughts
+const insertMarkdown = (before, after = '') => {
+  const textarea = document.getElementById('afterthought-editor')
+  if (!textarea) return
+  
+  const start = textarea.selectionStart
+  const end = textarea.selectionEnd
+  const selectedText = newThought.value.substring(start, end)
+  
+  const newText = before + selectedText + after
+  const newContent = 
+    newThought.value.substring(0, start) + 
+    newText + 
+    newThought.value.substring(end)
+  
+  newThought.value = newContent
+  
+  // Set cursor position
+  setTimeout(() => {
+    const newCursorPos = selectedText 
+      ? start + newText.length 
+      : start + before.length
+    textarea.focus()
+    textarea.setSelectionRange(newCursorPos, newCursorPos)
+  }, 0)
+}
+
+const formatBold = () => insertMarkdown('**', '**')
+const formatItalic = () => insertMarkdown('*', '*')
+const formatH1 = () => insertMarkdown('# ')
+const formatH2 = () => insertMarkdown('## ')
+const formatBulletList = () => insertMarkdown('- ')
+const formatNumberedList = () => insertMarkdown('1. ')
+const formatLink = () => insertMarkdown('[', '](url)')
+const formatQuote = () => insertMarkdown('> ')
+
+const formatActions = [
+  { icon: Bold, handler: formatBold, label: 'Bold' },
+  { icon: Italic, handler: formatItalic, label: 'Italic' },
+  { icon: Heading1, handler: formatH1, label: 'Heading 1' },
+  { icon: Heading2, handler: formatH2, label: 'Heading 2' },
+  { icon: List, handler: formatBulletList, label: 'Bullet List' },
+  { icon: ListOrdered, handler: formatNumberedList, label: 'Numbered List' },
+  { icon: Link, handler: formatLink, label: 'Link' },
+  { icon: Quote, handler: formatQuote, label: 'Quote' },
+]
+
+
 
 </script>
 
@@ -111,7 +159,7 @@ const submitThought = () => {
         >
           <CardContent class="pt-4">
             <div>
-              <p class="text-sm leading-relaxed whitespace-pre-wrap">{{ thought.content }}</p>
+              <div class="prose prose-sm dark:prose-invert max-w-none" v-html="marked(thought.content)" />
               <p class="text-xs text-muted-foreground mt-2">{{ formatThoughtDate(thought.createdAt) }}</p>
             </div>
           </CardContent>
@@ -125,10 +173,26 @@ const submitThought = () => {
 
       <!-- Add New Thought -->
       <div class="space-y-3">
+        <!-- Formatting Toolbar -->
+        <div class="flex flex-wrap gap-1 p-2 border rounded-lg bg-muted/30">
+          <Button 
+            v-for="action in formatActions" 
+            :key="action.label"
+            variant="ghost" 
+            size="sm" 
+            @click="action.handler"
+            class="h-8 w-8 p-0"
+            :title="action.label"
+          >
+            <component :is="action.icon" class="w-4 h-4" />
+          </Button>
+        </div>
+
         <Textarea 
+          id="afterthought-editor"
           v-model="newThought" 
-          placeholder="Add an afterthought or reflection..."
-          class="min-h-[100px] resize-none"
+          placeholder="Add an afterthought or reflection (supports markdown)..."
+          class="min-h-[100px] resize-none font-mono"
           @keydown.ctrl.enter="submitThought"
           @keydown.meta.enter="submitThought"
         />
