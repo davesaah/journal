@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { ArrowLeft, Save, Eye, EyeOff } from 'lucide-vue-next'
+import { ArrowLeft, Save, Eye, EyeOff, Bold, Italic, Heading1, Heading2, List, ListOrdered, Link, Quote } from 'lucide-vue-next'
 import { marked } from 'marked'
 
 const route = useRoute()
@@ -16,6 +16,18 @@ const { addEntry, getEntry, updateEntry } = useJournal()
 const isEditing = ref(false)
 const entryId = ref(null)
 const showPreview = ref(true)
+
+const formatActions = [
+  { icon: Bold, handler: () => formatBold(), label: 'Bold' },
+  { icon: Italic, handler: () => formatItalic(), label: 'Italic' },
+  { icon: Heading1, handler: () => formatH1(), label: 'Heading 1' },
+  { icon: Heading2, handler: () => formatH2(), label: 'Heading 2' },
+  { icon: List, handler: () => formatBulletList(), label: 'Bullet List' },
+  { icon: ListOrdered, handler: () => formatNumberedList(), label: 'Numbered List' },
+  { icon: Link, handler: () => formatLink(), label: 'Link' },
+  { icon: Quote, handler: () => formatQuote(), label: 'Quote' },
+]
+
 
 const form = ref({
   title: '',
@@ -65,6 +77,47 @@ const cancel = () => {
 const togglePreview = () => {
   showPreview.value = !showPreview.value
 }
+
+// Formatting functions
+const textareaRef = ref(null)
+
+const insertMarkdown = (before, after = '') => {
+  const textarea = document.getElementById('content-editor')
+  if (!textarea) return
+  
+  const start = textarea.selectionStart
+  const end = textarea.selectionEnd
+  const selectedText = form.value.content.substring(start, end)
+  
+  const newText = before + selectedText + after
+  const newContent = 
+    form.value.content.substring(0, start) + 
+    newText + 
+    form.value.content.substring(end)
+  
+  form.value.content = newContent
+  
+  // Set cursor position
+  setTimeout(() => {
+    const newCursorPos = selectedText 
+      ? start + newText.length 
+      : start + before.length
+    textarea.focus()
+    textarea.setSelectionRange(newCursorPos, newCursorPos)
+  }, 0)
+}
+
+const formatBold = () => insertMarkdown('**', '**')
+const formatItalic = () => insertMarkdown('*', '*')
+const formatH1 = () => insertMarkdown('# ')
+const formatH2 = () => insertMarkdown('## ')
+const formatBulletList = () => insertMarkdown('- ')
+const formatNumberedList = () => insertMarkdown('1. ')
+const formatLink = () => insertMarkdown('[', '](url)')
+const formatQuote = () => insertMarkdown('> ')
+
+
+
 </script>
 
 <template>
@@ -106,7 +159,24 @@ const togglePreview = () => {
         <!-- Editor Pane -->
         <div class="flex flex-col overflow-hidden">
           <div class="text-xs font-medium text-muted-foreground mb-2 px-2">Editor (Markdown)</div>
+          
+          <!-- Formatting Toolbar -->
+          <div class="flex flex-wrap gap-1 mb-2 p-2 border rounded-lg bg-muted/30">
+            <Button 
+              v-for="action in formatActions" 
+              :key="action.label"
+              variant="ghost" 
+              size="sm" 
+              @click="action.handler"
+              class="h-8 w-8 p-0"
+              :title="action.label"
+            >
+              <component :is="action.icon" class="w-4 h-4" />
+            </Button>
+          </div>
+
           <Textarea 
+            id="content-editor"
             v-model="form.content" 
             placeholder="Start writing in markdown...
 

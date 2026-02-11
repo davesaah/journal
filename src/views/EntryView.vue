@@ -10,12 +10,12 @@ import {
   CardTitle,
   CardContent
 } from '@/components/ui/card'
-import { ArrowLeft, Trash2, MessageSquare, Send } from 'lucide-vue-next'
+import { ArrowLeft, MessageSquare, Send } from 'lucide-vue-next'
 import { marked } from 'marked'
 
 const route = useRoute()
 const router = useRouter()
-const { getEntry, deleteEntry, addAfterthought } = useJournal()
+const { getEntry, addAfterthought } = useJournal()
 
 const entry = computed(() => getEntry(route.params.id))
 const newThought = ref('')
@@ -65,13 +65,6 @@ const formatThoughtDate = (dateString) => {
   })
 }
 
-const deleteAndRedirect = () => {
-  if (confirm('Are you sure you want to delete this entry?')) {
-    deleteEntry(entry.value.id)
-    router.push('/')
-  }
-}
-
 const goBack = () => {
   router.back()
 }
@@ -90,9 +83,6 @@ const submitThought = () => {
     <header class="flex justify-between items-center mb-8">
       <Button variant="ghost" @click="goBack" class="gap-2 pl-0 hover:pl-2 transition-all">
         <ArrowLeft class="w-4 h-4" /> Back
-      </Button>
-      <Button variant="destructive" size="sm" @click="deleteAndRedirect" class="gap-2">
-        <Trash2 class="w-4 h-4" /> Delete
       </Button>
     </header>
 
