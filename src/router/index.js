@@ -39,8 +39,11 @@ const router = createRouter({
 })
 
 // Navigation guards
-router.beforeEach((to, from, next) => {
-  const { isAuthenticated } = useAuth()
+router.beforeEach(async (to, from, next) => {
+  const { isAuthenticated, authReady } = useAuth()
+  
+  // Wait for auth to be ready (session restored)
+  await authReady()
   
   if (to.meta.requiresAuth && !isAuthenticated.value) {
     // Redirect to login if route requires auth and user is not authenticated

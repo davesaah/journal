@@ -1,97 +1,143 @@
 import { ref, watch } from 'vue'
+import { supabase } from '../lib/supabase'
 import { useAuth } from './useAuth'
 
-const SHARED_STORAGE_KEY = 'journal-entries-shared'
+// Shared state
+const entries = ref([])
+const loading = ref(true)
+let initialized = false
+let subscription = null
+
+// Load entries globally
+const loadEntries = async () => {
+  loading.value = true
+  const { data, error } = await supabase
+    .from('entries')
+    .select('*, afterthoughts(*)')
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error loading entries:', error.message)
+  } else {
+    entries.value = data
+  }
+  loading.value = false
+}
+
+// Initialize subscriptions once
+const initJournal = () => {
+  if (initialized) return
+  initialized = true
+
+  loadEntries()
+
+  // Set up realtime subscription
+  subscription = supabase
+    .channel('journal_changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'entries' }, () => {
+      loadEntries()
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'afterthoughts' }, () => {
+      loadEntries()
+    })
+    .subscribe()
+}
+
+// Watch for auth changes to reload entries if needed
+// (Though with current RLS select policy 'true', it's not strictly necessary for viewing, 
+// but good practice for when users log in/out)
+const { currentUser } = useAuth()
+watch(currentUser, (user) => {
+  if (user) {
+    loadEntries() // Reload when user signs in to ensure correct view
+  } else {
+    entries.value = [] // Clear when signed out
+  }
+}, { immediate: true })
+
+// Start initialization
+initJournal()
 
 export function useJournal() {
   const { currentUser } = useAuth()
-  
-  const entries = ref([])
 
-  // Load all entries from shared storage
-  const loadEntries = () => {
-    const stored = localStorage.getItem(SHARED_STORAGE_KEY)
-    if (stored) {
-      try {
-        entries.value = JSON.parse(stored)
-      } catch (e) {
-        entries.value = []
-      }
-    } else {
-      entries.value = []
-    }
-  }
-
-  // Save all entries to shared storage whenever they change
-  watch(entries, (newEntries) => {
-    localStorage.setItem(SHARED_STORAGE_KEY, JSON.stringify(newEntries))
-  }, { deep: true })
-
-  // Load entries on init
-  loadEntries()
-
-  const addEntry = (entry) => {
+  const addEntry = async (entry) => {
     if (!currentUser.value) return
     
-    const newEntry = {
-      ...entry,
-      id: crypto.randomUUID(),
-      authorId: currentUser.value.id,
-      authorName: currentUser.value.name,
-      createdAt: new Date().toISOString()
+    const { data, error } = await supabase
+      .from('entries')
+      .insert({
+        title: entry.title,
+        content: entry.content,
+        author_id: currentUser.value.id,
+        author_name: currentUser.value.user_metadata?.name || currentUser.value.email?.split('@')[0] || 'Anonymous',
+        created_at: entry.created_at || new Date().toISOString()
+      })
+      .select()
+
+    if (error) {
+      console.error('Error adding entry:', error.message)
+      return { success: false, error: error.message }
     }
-    entries.value.unshift(newEntry)
+    return { success: true, data: data[0] }
   }
 
-  const updateEntry = (id, updates) => {
-    const index = entries.value.findIndex(e => e.id === id)
-    if (index !== -1) {
-      // Only allow updating own entries
-      if (entries.value[index].authorId === currentUser.value?.id) {
-        entries.value[index] = {
-          ...entries.value[index],
-          ...updates,
-          updatedAt: new Date().toISOString()
-        }
-      }
+  const updateEntry = async (id, updates) => {
+    const { error } = await supabase
+      .from('entries')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+
+    if (error) {
+      console.error('Error updating entry:', error.message)
+      return { success: false, error: error.message }
     }
+    return { success: true }
   }
 
-  const deleteEntry = (id) => {
-    // Only allow deleting own entries
-    const entry = entries.value.find(e => e.id === id)
-    if (entry && entry.authorId === currentUser.value?.id) {
-      entries.value = entries.value.filter(e => e.id !== id)
+  const deleteEntry = async (id) => {
+    const { error } = await supabase
+      .from('entries')
+      .delete()
+      .eq('id', id)
+
+    if (error) {
+      console.error('Error deleting entry:', error.message)
+      return { success: false, error: error.message }
     }
+    return { success: true }
   }
 
   const getEntry = (id) => {
     return entries.value.find(e => e.id === id)
   }
 
-  const addAfterthought = (entryId, thought) => {
-    const index = entries.value.findIndex(e => e.id === entryId)
-    if (index !== -1) {
-      // Only allow adding afterthoughts to own entries
-      if (entries.value[index].authorId === currentUser.value?.id) {
-        if (!entries.value[index].afterthoughts) {
-          entries.value[index].afterthoughts = []
-        }
-        entries.value[index].afterthoughts.push({
-          id: crypto.randomUUID(),
-          content: thought,
-          createdAt: new Date().toISOString()
-        })
-      }
+  const addAfterthought = async (entryId, thought) => {
+    const { data, error } = await supabase
+      .from('afterthoughts')
+      .insert({
+        entry_id: entryId,
+        content: thought
+      })
+      .select()
+
+    if (error) {
+      console.error('Error adding afterthought:', error.message)
+      return { success: false, error: error.message }
     }
+    return { success: true, data: data[0] }
   }
 
   const isOwnEntry = (entry) => {
-    return entry && entry.authorId === currentUser.value?.id
+    return entry && entry.author_id === currentUser.value?.id
   }
 
   return {
     entries,
+    loading,
     addEntry,
     updateEntry,
     deleteEntry,

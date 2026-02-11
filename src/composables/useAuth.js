@@ -1,58 +1,68 @@
 import { ref, computed } from 'vue'
+import { supabase } from '../lib/supabase'
 
-// Hardcoded users - you can change these credentials
-const USERS = [
-  { id: 'user1', name: 'David', password: 'david123' },
-  { id: 'user2', name: 'Patience', password: 'patience123' }
-]
+// Shared state
+const currentUser = ref(null)
+const loading = ref(true)
+let initialized = false
 
-const STORAGE_KEY = 'journal-current-user'
+// Initialize auth state once globally
+let authPromise = null
+
+const initAuth = async () => {
+  if (authPromise) return authPromise
+  
+  authPromise = (async () => {
+    // Check current session
+    const { data: { session } } = await supabase.auth.getSession()
+    currentUser.value = session?.user ?? null
+    loading.value = false
+
+    // Listen for changes
+    supabase.auth.onAuthStateChange((_event, session) => {
+      currentUser.value = session?.user ?? null
+    })
+    
+    return true
+  })()
+
+  return authPromise
+}
+
+// Start initialization immediately
+initAuth()
 
 export function useAuth() {
-  const currentUser = ref(null)
-
-  // Load current user from localStorage on init
-  const loadUser = () => {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) {
-      try {
-        currentUser.value = JSON.parse(stored)
-      } catch (e) {
-        localStorage.removeItem(STORAGE_KEY)
-      }
-    }
-  }
-
-  // Initialize
-  loadUser()
-
   const isAuthenticated = computed(() => currentUser.value !== null)
+  const authReady = () => authPromise
 
-  const login = (username, password) => {
-    const user = USERS.find(u => u.name === username && u.password === password)
-    if (user) {
-      const userData = { id: user.id, name: user.name }
-      currentUser.value = userData
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(userData))
-      return true
+  const login = async (email, password) => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+    
+    if (error) {
+      console.error('Login error:', error.message)
+      return { success: false, error: error.message }
     }
-    return false
+    
+    return { success: true }
   }
 
-  const logout = () => {
-    currentUser.value = null
-    localStorage.removeItem(STORAGE_KEY)
-  }
-
-  const getUsers = () => {
-    return USERS.map(u => ({ id: u.id, name: u.name }))
+  const logout = async () => {
+    const { error } = await supabase.auth.signOut()
+    if (error) {
+      console.error('Logout error:', error.message)
+    }
   }
 
   return {
     currentUser,
     isAuthenticated,
+    loading,
+    authReady,
     login,
-    logout,
-    getUsers
+    logout
   }
 }

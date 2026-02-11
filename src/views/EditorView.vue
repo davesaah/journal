@@ -6,16 +6,17 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { ArrowLeft, Save, Eye, EyeOff, Bold, Italic, Heading1, Heading2, List, ListOrdered, Link, Quote } from 'lucide-vue-next'
+import { ArrowLeft, Save, Eye, EyeOff, Bold, Italic, Heading1, Heading2, List, ListOrdered, Link, Quote, Loader2 } from 'lucide-vue-next'
 import { marked } from 'marked'
 
 const route = useRoute()
 const router = useRouter()
-const { addEntry, getEntry, updateEntry } = useJournal()
+const { addEntry, getEntry, updateEntry, loading: journalLoading } = useJournal()
 
 const isEditing = ref(false)
 const entryId = ref(null)
 const showPreview = ref(true)
+const isSaving = ref(false)
 
 const formatActions = [
   { icon: Bold, handler: () => formatBold(), label: 'Bold' },
@@ -28,11 +29,10 @@ const formatActions = [
   { icon: Quote, handler: () => formatQuote(), label: 'Quote' },
 ]
 
-
 const form = ref({
   title: '',
   content: '',
-  date: new Date().toISOString().slice(0, 16)
+  created_at: new Date().toISOString().slice(0, 16)
 })
 
 // Configure marked for better rendering
@@ -46,28 +46,49 @@ const markdownPreview = computed(() => {
   return marked(form.value.content)
 })
 
-onMounted(() => {
+onMounted(async () => {
   if (route.params.id) {
     isEditing.value = true
     entryId.value = route.params.id
+    
+    // If data is already loaded in useJournal, we can get it from there
+    // Otherwise, the realtime subscription will eventually fill it,
+    // but for editing a specific entry, it's better to ensure we have it.
     const entry = getEntry(route.params.id)
     if (entry) {
-      form.value = { ...entry }
+      form.value = { 
+        ...entry,
+        created_at: entry.created_at ? new Date(entry.created_at).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16)
+      }
     } else {
-      router.push('/')
+      // If not found in memory, we might need to wait or handle the error
+      // For now, let's assume it will be available or redirect if it definitely doesn't exist after loading
     }
   }
 })
 
-const save = () => {
+const save = async () => {
   if (!form.value.content.trim()) return
+  
+  isSaving.value = true
+  let result
+  
+  const payload = {
+    title: form.value.title,
+    content: form.value.content,
+    created_at: new Date(form.value.created_at).toISOString()
+  }
 
   if (isEditing.value) {
-    updateEntry(entryId.value, form.value)
+    result = await updateEntry(entryId.value, payload)
   } else {
-    addEntry(form.value)
+    result = await addEntry(payload)
   }
-  router.push('/')
+  
+  isSaving.value = false
+  if (result.success) {
+    router.push('/')
+  }
 }
 
 const cancel = () => {
@@ -79,8 +100,6 @@ const togglePreview = () => {
 }
 
 // Formatting functions
-const textareaRef = ref(null)
-
 const insertMarkdown = (before, after = '') => {
   const textarea = document.getElementById('content-editor')
   if (!textarea) return
@@ -116,14 +135,12 @@ const formatNumberedList = () => insertMarkdown('1. ')
 const formatLink = () => insertMarkdown('[', '](url)')
 const formatQuote = () => insertMarkdown('> ')
 
-
-
 </script>
 
 <template>
   <div class="container max-w-6xl mx-auto py-8 px-4 h-[calc(100vh-2rem)] flex flex-col">
     <header class="flex justify-between items-center mb-6">
-      <Button variant="ghost" @click="cancel" class="gap-2 pl-0">
+      <Button variant="ghost" @click="cancel" class="gap-2 pl-0 hover:pl-2 transition-all">
         <ArrowLeft class="w-4 h-4" /> Back
       </Button>
       <div class="flex gap-2">
@@ -131,70 +148,71 @@ const formatQuote = () => insertMarkdown('> ')
           <component :is="showPreview ? EyeOff : Eye" class="w-4 h-4" />
           {{ showPreview ? 'Hide' : 'Show' }} Preview
         </Button>
-        <Button @click="save" class="gap-2">
-          <Save class="w-4 h-4" /> Save
+        <Button @click="save" class="gap-2 shadow-lg shadow-primary/20" :disabled="isSaving || journalLoading">
+          <component :is="isSaving ? Loader2 : Save" class="w-4 h-4" :class="isSaving ? 'animate-spin' : ''" />
+          {{ isSaving ? 'Saving...' : 'Save' }}
         </Button>
       </div>
     </header>
     
-    <div class="space-y-4 flex-1 flex flex-col overflow-hidden">
-      <div class="grid gap-4">
+    <div v-if="journalLoading && isEditing && !form.title" class="flex-1 flex flex-col items-center justify-center">
+       <Loader2 class="w-10 h-10 text-primary animate-spin mb-4" />
+       <p class="text-muted-foreground">Fetching your entry...</p>
+    </div>
+
+    <div v-else class="space-y-4 flex-1 flex flex-col overflow-hidden animate-in fade-in duration-500">
+      <div class="grid gap-2">
         <Input 
           v-model="form.title" 
           placeholder="Entry Title" 
-          class="text-2xl font-bold border-none px-0 shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/50 h-auto py-2"
+          class="text-3xl font-bold border-none px-0 shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/30 h-auto py-2 bg-transparent"
         />
-        <div class="flex items-center gap-2 text-muted-foreground">
+        <div class="flex items-center gap-2 text-muted-foreground/60">
            <Label for="date" class="sr-only">Date</Label>
            <Input 
               id="date" 
               type="datetime-local" 
-              v-model="form.date" 
-              class="w-auto border-none shadow-none px-0 focus-visible:ring-0 text-sm h-8" 
+              v-model="form.created_at" 
+              class="w-auto border-none shadow-none px-0 focus-visible:ring-0 text-sm h-8 bg-transparent" 
             />
         </div>
       </div>
 
-      <div class="flex-1 grid gap-4 overflow-hidden" :class="showPreview ? 'md:grid-cols-2' : 'grid-cols-1'">
+      <div class="flex-1 grid gap-6 overflow-hidden" :class="showPreview ? 'md:grid-cols-2' : 'grid-cols-1'">
         <!-- Editor Pane -->
         <div class="flex flex-col overflow-hidden">
-          <div class="text-xs font-medium text-muted-foreground mb-2 px-2">Editor (Markdown)</div>
+          <div class="flex items-center justify-between mb-2 px-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-muted-foreground/50">Editor (Markdown)</span>
+          </div>
           
           <!-- Formatting Toolbar -->
-          <div class="flex flex-wrap gap-1 mb-2 p-2 border rounded-lg bg-muted/30">
+          <div class="flex flex-wrap gap-1 mb-4 p-1.5 border rounded-xl bg-muted/20 backdrop-blur-sm border-primary/5">
             <Button 
               v-for="action in formatActions" 
               :key="action.label"
               variant="ghost" 
               size="sm" 
               @click="action.handler"
-              class="h-8 w-8 p-0"
+              class="h-9 w-9 p-0 hover:bg-primary/10 hover:text-primary transition-colors"
               :title="action.label"
             >
-              <component :is="action.icon" class="w-4 h-4" />
+              <component :is="action.icon" class="w-4.5 h-4.5" />
             </Button>
           </div>
 
           <Textarea 
             id="content-editor"
             v-model="form.content" 
-            placeholder="Start writing in markdown...
-
-**Bold text** or *italic*
-- Bullet lists
-1. Numbered lists
-# Headings
-
-[Links](url) and more!" 
-            class="flex-1 resize-none border rounded-lg p-4 focus-visible:ring-2 text-base leading-relaxed font-mono"
+            placeholder="Start writing your thoughts..." 
+            class="flex-1 resize-none border-none rounded-2xl p-6 focus-visible:ring-1 focus-visible:ring-primary/20 text-lg leading-relaxed bg-muted/10"
           />
         </div>
 
         <!-- Preview Pane -->
         <div v-if="showPreview" class="flex flex-col overflow-hidden">
-          <div class="text-xs font-medium text-muted-foreground mb-2 px-2">Preview</div>
+          <div class="text-xs font-bold uppercase tracking-wider text-muted-foreground/50 mb-2 px-2">Preview</div>
           <div 
-            class="flex-1 border rounded-lg p-4 overflow-auto prose prose-sm dark:prose-invert max-w-none"
+            class="flex-1 border border-primary/5 rounded-2xl p-6 overflow-auto prose prose-lg dark:prose-invert max-w-none bg-card/30 backdrop-blur-sm"
             v-html="markdownPreview"
           />
         </div>
@@ -214,21 +232,64 @@ const formatQuote = () => insertMarkdown('> ')
 :deep(.prose h3),
 :deep(.prose h4) {
   color: hsl(var(--foreground));
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
 }
 
 :deep(.prose h1) {
-  font-size: 1.875rem;
+  font-size: 2.25rem;
   margin-top: 0;
 }
 
 :deep(.prose h2) {
+  font-size: 1.875rem;
+}
+
+:deep(.prose h3) {
   font-size: 1.5rem;
+}
+
+:deep(.prose p) {
+  line-height: 1.8;
+  margin-bottom: 1.25rem;
 }
 
 :deep(.prose a) {
   color: hsl(var(--primary));
-  text-decoration: underline;
+  text-decoration-color: hsl(var(--primary) / 0.3);
+  text-underline-offset: 4px;
+}
+
+:deep(.prose blockquote) {
+  border-left: 4px solid hsl(var(--primary));
+  padding-left: 1.5rem;
+  font-style: italic;
+  color: hsl(var(--muted-foreground));
+  background: hsl(var(--primary) / 0.03);
+  padding: 1rem 1.5rem;
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+:deep(.prose ul),
+:deep(.prose ol) {
+  padding-left: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+:deep(.prose ul) {
+  list-style-type: disc;
+}
+
+:deep(.prose ul li::marker) {
+  color: hsl(var(--primary));
+  font-weight: bold;
+}
+
+:deep(.prose ol li::marker) {
+  color: hsl(var(--primary));
+  font-weight: 600;
 }
 
 :deep(.prose code) {
@@ -245,38 +306,9 @@ const formatQuote = () => insertMarkdown('> ')
   overflow-x: auto;
 }
 
-:deep(.prose blockquote) {
-  border-left: 4px solid hsl(var(--primary));
-  padding-left: 1rem;
-  font-style: italic;
-  color: hsl(var(--muted-foreground));
-}
-
-:deep(.prose ul),
-:deep(.prose ol) {
-  padding-left: 1.5rem;
-}
-
-:deep(.prose ul) {
-  list-style-type: disc;
-}
-
-:deep(.prose ul li) {
-  position: relative;
-  padding-left: 0.5rem;
-}
-
-:deep(.prose ul li::marker) {
-  color: hsl(var(--primary));
-  font-weight: bold;
-}
-
-:deep(.prose ol li::marker) {
-  color: hsl(var(--primary));
-  font-weight: 600;
-}
-
 :deep(.prose hr) {
   border-color: hsl(var(--border));
+  margin: 2rem 0;
 }
 </style>
+
