@@ -15,10 +15,11 @@ import { marked } from 'marked'
 
 const route = useRoute()
 const router = useRouter()
-const { getEntry, addAfterthought } = useJournal()
+const { getEntry, addAfterthought, isOwnEntry } = useJournal()
 
 const entry = computed(() => getEntry(route.params.id))
 const newThought = ref('')
+const canEdit = computed(() => entry.value && isOwnEntry(entry.value))
 
 // Configure marked for better rendering
 marked.setOptions({
@@ -135,7 +136,17 @@ const formatActions = [
     </header>
 
     <article class="mb-12">
-      <h1 class="mb-2 text-4xl font-extrabold tracking-tight">{{ entry.title || 'Untitled Entry' }}</h1>
+      <div class="flex items-center gap-3 mb-4">
+        <h1 class="text-4xl font-extrabold tracking-tight flex-1">{{ entry.title || 'Untitled Entry' }}</h1>
+        <span 
+          class="text-sm px-3 py-1.5 rounded-full font-medium whitespace-nowrap"
+          :class="canEdit 
+            ? 'bg-primary/20 text-primary' 
+            : 'bg-muted text-muted-foreground'"
+        >
+          {{ entry.authorName || 'Unknown' }}
+        </span>
+      </div>
       <time class="block text-muted-foreground mb-8 text-lg">{{ formatDate(entry.date) }}</time>
       <div 
         class="prose prose-lg dark:prose-invert max-w-none"
@@ -143,15 +154,15 @@ const formatActions = [
       />
     </article>
 
-    <!-- AfterThoughts Section -->
-    <div class="border-t border-border pt-8">
+    <!-- AfterThoughts Section - Always visible, but only editable for own entries -->
+    <div v-if="entry.afterthoughts && entry.afterthoughts.length > 0" class="border-t border-border pt-8">
       <div class="flex items-center gap-2 mb-6">
         <MessageSquare class="w-5 h-5 text-primary" />
         <h2 class="text-2xl font-bold">AfterThoughts</h2>
       </div>
 
       <!-- Existing Thoughts -->
-      <div v-if="entry.afterthoughts && entry.afterthoughts.length > 0" class="space-y-4 mb-6">
+      <div class="space-y-4" :class="canEdit ? 'mb-6' : ''">
         <Card 
           v-for="thought in entry.afterthoughts" 
           :key="thought.id"
@@ -166,7 +177,48 @@ const formatActions = [
         </Card>
       </div>
 
-      <div v-else class="text-center py-8 text-muted-foreground">
+      <!-- Add New Thought - Only for own entries -->
+      <div v-if="canEdit" class="space-y-3">
+        <!-- Formatting Toolbar -->
+        <div class="flex flex-wrap gap-1 p-2 border rounded-lg bg-muted/30">
+          <Button 
+            v-for="action in formatActions" 
+            :key="action.label"
+            variant="ghost" 
+            size="sm" 
+            @click="action.handler"
+            class="h-8 w-8 p-0"
+            :title="action.label"
+          >
+            <component :is="action.icon" class="w-4 h-4" />
+          </Button>
+        </div>
+
+        <Textarea 
+          id="afterthought-editor"
+          v-model="newThought" 
+          placeholder="Add an afterthought or reflection (supports markdown)..."
+          class="min-h-[100px] resize-none font-mono"
+          @keydown.ctrl.enter="submitThought"
+          @keydown.meta.enter="submitThought"
+        />
+        <div class="flex justify-between items-center">
+          <p class="text-xs text-muted-foreground">Ctrl/Cmd + Enter to submit</p>
+          <Button @click="submitThought" class="gap-2" :disabled="!newThought.trim()">
+            <Send class="w-4 h-4" /> Add Thought
+          </Button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty state with add form - Only for own entries with no afterthoughts -->
+    <div v-else-if="canEdit" class="border-t border-border pt-8">
+      <div class="flex items-center gap-2 mb-6">
+        <MessageSquare class="w-5 h-5 text-primary" />
+        <h2 class="text-2xl font-bold">AfterThoughts</h2>
+      </div>
+
+      <div class="text-center py-8 text-muted-foreground mb-6">
         <MessageSquare class="w-12 h-12 mx-auto mb-2 opacity-50" />
         <p>No afterthoughts yet. Add your reflections below.</p>
       </div>

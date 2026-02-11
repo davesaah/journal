@@ -1,52 +1,68 @@
 import { ref, watch } from 'vue'
+import { useAuth } from './useAuth'
 
-const entries = ref([])
-
-// Load from local storage
-const loadEntries = () => {
-  const stored = localStorage.getItem('journal_entries')
-  if (stored) {
-    entries.value = JSON.parse(stored)
-  }
-}
-
-// Save to local storage
-const saveEntries = () => {
-  localStorage.setItem('journal_entries', JSON.stringify(entries.value))
-}
+const SHARED_STORAGE_KEY = 'journal-entries-shared'
 
 export function useJournal() {
-  // Initialize if empty (singleton pattern effect within app lifecycle)
-  if (entries.value.length === 0) {
-    loadEntries()
+  const { currentUser } = useAuth()
+  
+  const entries = ref([])
+
+  // Load all entries from shared storage
+  const loadEntries = () => {
+    const stored = localStorage.getItem(SHARED_STORAGE_KEY)
+    if (stored) {
+      try {
+        entries.value = JSON.parse(stored)
+      } catch (e) {
+        entries.value = []
+      }
+    } else {
+      entries.value = []
+    }
   }
 
-  watch(entries, () => {
-    saveEntries()
+  // Save all entries to shared storage whenever they change
+  watch(entries, (newEntries) => {
+    localStorage.setItem(SHARED_STORAGE_KEY, JSON.stringify(newEntries))
   }, { deep: true })
 
+  // Load entries on init
+  loadEntries()
+
   const addEntry = (entry) => {
-    entries.value.unshift({
+    if (!currentUser.value) return
+    
+    const newEntry = {
+      ...entry,
       id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      ...entry
-    })
+      authorId: currentUser.value.id,
+      authorName: currentUser.value.name,
+      createdAt: new Date().toISOString()
+    }
+    entries.value.unshift(newEntry)
   }
 
-  const updateEntry = (id, updatedFields) => {
+  const updateEntry = (id, updates) => {
     const index = entries.value.findIndex(e => e.id === id)
     if (index !== -1) {
-      entries.value[index] = {
-        ...entries.value[index],
-        ...updatedFields,
-        updatedAt: new Date().toISOString()
+      // Only allow updating own entries
+      if (entries.value[index].authorId === currentUser.value?.id) {
+        entries.value[index] = {
+          ...entries.value[index],
+          ...updates,
+          updatedAt: new Date().toISOString()
+        }
       }
     }
   }
 
   const deleteEntry = (id) => {
-    entries.value = entries.value.filter(e => e.id !== id)
+    // Only allow deleting own entries
+    const entry = entries.value.find(e => e.id === id)
+    if (entry && entry.authorId === currentUser.value?.id) {
+      entries.value = entries.value.filter(e => e.id !== id)
+    }
   }
 
   const getEntry = (id) => {
@@ -56,24 +72,22 @@ export function useJournal() {
   const addAfterthought = (entryId, thought) => {
     const index = entries.value.findIndex(e => e.id === entryId)
     if (index !== -1) {
-      if (!entries.value[index].afterthoughts) {
-        entries.value[index].afterthoughts = []
+      // Only allow adding afterthoughts to own entries
+      if (entries.value[index].authorId === currentUser.value?.id) {
+        if (!entries.value[index].afterthoughts) {
+          entries.value[index].afterthoughts = []
+        }
+        entries.value[index].afterthoughts.push({
+          id: crypto.randomUUID(),
+          content: thought,
+          createdAt: new Date().toISOString()
+        })
       }
-      entries.value[index].afterthoughts.push({
-        id: crypto.randomUUID(),
-        content: thought,
-        createdAt: new Date().toISOString()
-      })
     }
   }
 
-  const deleteAfterthought = (entryId, thoughtId) => {
-    const index = entries.value.findIndex(e => e.id === entryId)
-    if (index !== -1 && entries.value[index].afterthoughts) {
-      entries.value[index].afterthoughts = entries.value[index].afterthoughts.filter(
-        t => t.id !== thoughtId
-      )
-    }
+  const isOwnEntry = (entry) => {
+    return entry && entry.authorId === currentUser.value?.id
   }
 
   return {
@@ -82,6 +96,7 @@ export function useJournal() {
     updateEntry,
     deleteEntry,
     getEntry,
-    addAfterthought
+    addAfterthought,
+    isOwnEntry
   }
 }
