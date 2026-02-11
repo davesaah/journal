@@ -10,7 +10,7 @@ import {
   CardTitle,
   CardContent
 } from '@/components/ui/card'
-import { ArrowLeft, MessageSquare, Send, Bold, Italic, Heading1, Heading2, List, ListOrdered, Link, Quote, Loader2, Edit3 } from 'lucide-vue-next'
+import { ArrowLeft, MessageSquare, Send, Bold, Italic, Heading1, Heading2, List, ListOrdered, Link, Quote, Loader2 } from 'lucide-vue-next'
 import { marked } from 'marked'
 
 const route = useRoute()
@@ -69,10 +69,6 @@ const formatThoughtDate = (dateString) => {
 
 const goBack = () => {
   router.push('/')
-}
-
-const editEntry = () => {
-  router.push(`/edit/${entry.value.id}`)
 }
 
 const submitThought = async () => {
@@ -140,9 +136,6 @@ const formatActions = [
     <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 md:mb-12">
       <Button variant="ghost" @click="goBack" class="gap-2 pl-0 hover:pl-2 transition-all group">
         <ArrowLeft class="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Journal
-      </Button>
-      <Button v-if="canEdit" variant="outline" @click="editEntry" class="w-full sm:w-auto gap-2 border-primary/20 hover:bg-primary/5 shadow-sm h-10 md:h-11">
-        <Edit3 class="w-4 h-4" /> Edit Entry
       </Button>
     </header>
 

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useJournal } from '../composables/useJournal'
 import { Button } from '@/components/ui/button'
@@ -11,12 +11,10 @@ import { marked } from 'marked'
 
 const route = useRoute()
 const router = useRouter()
-const { addEntry, getEntry, updateEntry, loading: journalLoading } = useJournal()
+const { addEntry, getEntry, loading: journalLoading } = useJournal()
 
-const isEditing = ref(false)
-const entryId = ref(null)
-const showPreview = ref(true)
 const isSaving = ref(false)
+const showPreview = ref(true)
 
 const formatActions = [
   { icon: Bold, handler: () => formatBold(), label: 'Bold' },
@@ -46,32 +44,10 @@ const markdownPreview = computed(() => {
   return marked(form.value.content)
 })
 
-onMounted(async () => {
-  if (route.params.id) {
-    isEditing.value = true
-    entryId.value = route.params.id
-    
-    // If data is already loaded in useJournal, we can get it from there
-    // Otherwise, the realtime subscription will eventually fill it,
-    // but for editing a specific entry, it's better to ensure we have it.
-    const entry = getEntry(route.params.id)
-    if (entry) {
-      form.value = { 
-        ...entry,
-        created_at: entry.created_at ? new Date(entry.created_at).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16)
-      }
-    } else {
-      // If not found in memory, we might need to wait or handle the error
-      // For now, let's assume it will be available or redirect if it definitely doesn't exist after loading
-    }
-  }
-})
-
 const save = async () => {
   if (!form.value.content.trim()) return
   
   isSaving.value = true
-  let result
   
   const payload = {
     title: form.value.title,
@@ -79,11 +55,7 @@ const save = async () => {
     created_at: new Date(form.value.created_at).toISOString()
   }
 
-  if (isEditing.value) {
-    result = await updateEntry(entryId.value, payload)
-  } else {
-    result = await addEntry(payload)
-  }
+  const result = await addEntry(payload)
   
   isSaving.value = false
   if (result.success) {
@@ -157,12 +129,7 @@ const formatQuote = () => insertMarkdown('> ')
       </div>
     </header>
     
-    <div v-if="journalLoading && isEditing && !form.title" class="flex-1 flex flex-col items-center justify-center">
-       <Loader2 class="w-10 h-10 text-primary animate-spin mb-4" />
-       <p class="text-muted-foreground">Fetching your entry...</p>
-    </div>
-
-    <div v-else class="space-y-4 flex-1 flex flex-col overflow-hidden animate-in fade-in duration-500">
+    <div class="space-y-4 flex-1 flex flex-col overflow-hidden animate-in fade-in duration-500">
       <div class="grid gap-2 mb-2">
         <Input 
           v-model="form.title" 

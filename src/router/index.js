@@ -28,12 +28,6 @@ const router = createRouter({
       name: 'entry-detail',
       component: () => import('../views/EntryView.vue'),
       meta: { requiresAuth: true }
-    },
-    {
-      path: '/entry/:id/edit',
-      name: 'edit-entry',
-      component: () => import('../views/EditorView.vue'),
-      meta: { requiresAuth: true }
     }
   ]
 })

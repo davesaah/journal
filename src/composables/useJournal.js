@@ -82,35 +82,6 @@ export function useJournal() {
     return { success: true, data: data[0] }
   }
 
-  const updateEntry = async (id, updates) => {
-    const { error } = await supabase
-      .from('entries')
-      .update({
-        ...updates,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', id)
-
-    if (error) {
-      console.error('Error updating entry:', error.message)
-      return { success: false, error: error.message }
-    }
-    return { success: true }
-  }
-
-  const deleteEntry = async (id) => {
-    const { error } = await supabase
-      .from('entries')
-      .delete()
-      .eq('id', id)
-
-    if (error) {
-      console.error('Error deleting entry:', error.message)
-      return { success: false, error: error.message }
-    }
-    return { success: true }
-  }
-
   const getEntry = (id) => {
     return entries.value.find(e => e.id === id)
   }
@@ -139,8 +110,6 @@ export function useJournal() {
     entries,
     loading,
     addEntry,
-    updateEntry,
-    deleteEntry,
     getEntry,
     addAfterthought,
     isOwnEntry
