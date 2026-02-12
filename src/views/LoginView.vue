@@ -24,9 +24,9 @@ const handleAuth = async () => {
 
   error.value = ''
   isLoggingIn.value = true
-  
+
   const result = await login(email.value, password.value)
-  
+
   if (result.success) {
     router.push('/')
   } else {
@@ -56,7 +56,7 @@ const handleKeyPress = (e) => {
           <p class="text-muted-foreground text-sm italic">Your digital sanctuary awaits.</p>
         </div>
       </CardHeader>
-      
+
       <CardContent class="space-y-6 pb-10">
         <!-- Email Input -->
         <div class="space-y-2">
@@ -64,15 +64,8 @@ const handleKeyPress = (e) => {
             <Mail class="w-4 h-4 text-primary" />
             Email Address
           </Label>
-          <Input
-            id="email"
-            type="email"
-            v-model="email"
-            placeholder="name@example.com"
-            @keypress="handleKeyPress"
-            class="bg-background/50 h-11 rounded-xl"
-            autofocus
-          />
+          <Input id="email" type="email" v-model="email" placeholder="name@example.com" @keypress="handleKeyPress"
+            class="bg-background/50 h-11 rounded-xl" autofocus />
         </div>
 
         <!-- Password Input -->
@@ -81,24 +74,21 @@ const handleKeyPress = (e) => {
             <Lock class="w-4 h-4 text-primary" />
             Password
           </Label>
-          <Input
-            id="password"
-            type="password"
-            v-model="password"
-            placeholder="••••••••"
-            @keypress="handleKeyPress"
-            class="bg-background/50 h-11 rounded-xl"
-          />
+          <Input id="password" type="password" v-model="password" placeholder="••••••••" @keypress="handleKeyPress"
+            class="bg-background/50 h-11 rounded-xl" />
         </div>
 
         <!-- Error Message -->
-        <div v-if="error" class="text-sm text-center p-3 rounded-xl border bg-destructive/5 border-destructive/20 text-destructive font-medium animate-in fade-in zoom-in-95 duration-300">
+        <div v-if="error"
+          class="text-sm text-center p-3 rounded-xl border bg-destructive/5 border-destructive/20 text-destructive font-medium animate-in fade-in zoom-in-95 duration-300">
           {{ error }}
         </div>
 
         <div class="pt-2">
           <!-- Auth Button -->
-          <Button @click="handleAuth" class="w-full h-12 rounded-xl font-bold shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all" size="lg" :disabled="isLoggingIn">
+          <Button @click="handleAuth"
+            class="w-full h-12 rounded-xl font-bold shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
+            size="lg" :disabled="isLoggingIn">
             <Loader2 v-if="isLoggingIn" class="w-4 h-4 mr-2 animate-spin" />
             {{ isLoggingIn ? 'Signing In...' : 'Sign In' }}
           </Button>

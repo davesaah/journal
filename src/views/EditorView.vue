@@ -46,9 +46,9 @@ const markdownPreview = computed(() => {
 
 const save = async () => {
   if (!form.value.content.trim()) return
-  
+
   isSaving.value = true
-  
+
   const payload = {
     title: form.value.title,
     content: form.value.content,
@@ -56,7 +56,7 @@ const save = async () => {
   }
 
   const result = await addEntry(payload)
-  
+
   isSaving.value = false
   if (result.success) {
     router.push('/')
@@ -75,23 +75,23 @@ const togglePreview = () => {
 const insertMarkdown = (before, after = '') => {
   const textarea = document.getElementById('content-editor')
   if (!textarea) return
-  
+
   const start = textarea.selectionStart
   const end = textarea.selectionEnd
   const selectedText = form.value.content.substring(start, end)
-  
+
   const newText = before + selectedText + after
-  const newContent = 
-    form.value.content.substring(0, start) + 
-    newText + 
+  const newContent =
+    form.value.content.substring(0, start) +
+    newText +
     form.value.content.substring(end)
-  
+
   form.value.content = newContent
-  
+
   // Set cursor position
   setTimeout(() => {
-    const newCursorPos = selectedText 
-      ? start + newText.length 
+    const newCursorPos = selectedText
+      ? start + newText.length
       : start + before.length
     textarea.focus()
     textarea.setSelectionRange(newCursorPos, newCursorPos)
@@ -113,7 +113,7 @@ const formatQuote = () => insertMarkdown('> ')
   <div class="container max-w-6xl mx-auto py-6 md:py-8 px-4 h-full md:h-[calc(100vh-2rem)] flex flex-col">
     <header class="flex justify-between items-center mb-6">
       <Button variant="ghost" @click="cancel" class="gap-2 pl-0 hover:pl-2 transition-all group">
-        <ArrowLeft class="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> 
+        <ArrowLeft class="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
         <span class="hidden sm:inline">Back to Journal</span>
         <span class="sm:hidden text-sm uppercase tracking-widest font-bold">Back</span>
       </Button>
@@ -122,68 +122,55 @@ const formatQuote = () => insertMarkdown('> ')
           <component :is="showPreview ? EyeOff : Eye" class="w-4 h-4" />
           <span class="hidden md:inline">{{ showPreview ? 'Hide' : 'Show' }} Preview</span>
         </Button>
-        <Button @click="save" class="gap-2 shadow-lg shadow-primary/20 h-10 md:h-11 px-4 md:px-6" :disabled="isSaving || journalLoading">
+        <Button @click="save" class="gap-2 shadow-lg shadow-primary/20 h-10 md:h-11 px-4 md:px-6"
+          :disabled="isSaving || journalLoading">
           <component :is="isSaving ? Loader2 : Save" class="w-4 h-4" :class="isSaving ? 'animate-spin' : ''" />
           {{ isSaving ? 'Saving...' : 'Save' }}
         </Button>
       </div>
     </header>
-    
+
     <div class="space-y-4 flex-1 flex flex-col overflow-hidden animate-in fade-in duration-500">
       <div class="grid gap-2 mb-2">
-        <Input 
-          v-model="form.title" 
-          placeholder="Entry Title" 
-          class="text-2xl md:text-3xl font-bold border-none px-0 shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/30 h-auto py-2 bg-transparent"
-        />
+        <Input v-model="form.title" placeholder="Entry Title"
+          class="text-2xl md:text-3xl font-bold border-none px-0 shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/30 h-auto py-2 bg-transparent" />
         <div class="flex items-center gap-2 text-muted-foreground/60 border-b border-primary/5 pb-2">
-           <Label for="date" class="sr-only">Date</Label>
-           <Input 
-              id="date" 
-              type="datetime-local" 
-              v-model="form.created_at" 
-              class="w-auto border-none shadow-none px-0 focus-visible:ring-0 text-xs md:text-sm h-8 bg-transparent" 
-            />
+          <Label for="date" class="sr-only">Date</Label>
+          <Input id="date" type="datetime-local" v-model="form.created_at"
+            class="w-auto border-none shadow-none px-0 focus-visible:ring-0 text-xs md:text-sm h-8 bg-transparent" />
         </div>
       </div>
 
-      <div class="flex-1 grid gap-8 overflow-y-auto md:overflow-hidden pb-8 md:pb-0" :class="showPreview ? 'md:grid-cols-2' : 'grid-cols-1'">
+      <div class="flex-1 grid gap-8 overflow-y-auto md:overflow-hidden pb-8 md:pb-0"
+        :class="showPreview ? 'md:grid-cols-2' : 'grid-cols-1'">
         <!-- Editor Pane -->
         <div class="flex flex-col min-h-[400px] md:min-h-0 overflow-hidden">
           <div class="flex items-center justify-between mb-2 px-2">
-            <span class="text-[10px] md:text-xs font-bold uppercase tracking-wider text-muted-foreground/50">Editor (Markdown)</span>
+            <span class="text-[10px] md:text-xs font-bold uppercase tracking-wider text-muted-foreground/50">Editor
+              (Markdown)</span>
           </div>
-          
+
           <!-- Formatting Toolbar -->
-          <div class="flex flex-wrap gap-1 mb-4 p-1.5 border rounded-xl bg-muted/20 backdrop-blur-sm border-primary/5 sticky top-0 z-10">
-            <Button 
-              v-for="action in formatActions" 
-              :key="action.label"
-              variant="ghost" 
-              size="sm" 
-              @click="action.handler"
-              class="h-9 w-9 p-0 hover:bg-primary/10 hover:text-primary transition-colors"
-              :title="action.label"
-            >
+          <div
+            class="flex flex-wrap gap-1 mb-4 p-1.5 border rounded-xl bg-muted/20 backdrop-blur-sm border-primary/5 sticky top-0 z-10">
+            <Button v-for="action in formatActions" :key="action.label" variant="ghost" size="sm"
+              @click="action.handler" class="h-9 w-9 p-0 hover:bg-primary/10 hover:text-primary transition-colors"
+              :title="action.label">
               <component :is="action.icon" class="w-4 h-4 md:w-4.5 md:h-4.5" />
             </Button>
           </div>
 
-          <Textarea 
-            id="content-editor"
-            v-model="form.content" 
-            placeholder="Start writing your thoughts..." 
-            class="flex-1 resize-none border-none rounded-2xl p-5 md:p-6 focus-visible:ring-1 focus-visible:ring-primary/20 text-base md:text-lg leading-relaxed bg-muted/10 min-h-[300px] md:min-h-0"
-          />
+          <Textarea id="content-editor" v-model="form.content" placeholder="Start writing your thoughts..."
+            class="flex-1 resize-none border-none rounded-2xl p-5 md:p-6 focus-visible:ring-1 focus-visible:ring-primary/20 text-base md:text-lg leading-relaxed bg-muted/10 min-h-[300px] md:min-h-0" />
         </div>
 
         <!-- Preview Pane -->
         <div v-if="showPreview" class="flex flex-col overflow-hidden pb-12 md:pb-0">
-          <div class="text-[10px] md:text-xs font-bold uppercase tracking-wider text-muted-foreground/50 mb-2 px-2">Preview</div>
-          <div 
+          <div class="text-[10px] md:text-xs font-bold uppercase tracking-wider text-muted-foreground/50 mb-2 px-2">
+            Preview</div>
+          <div
             class="flex-1 border border-primary/5 rounded-2xl p-6 md:p-8 overflow-auto prose prose-lg dark:prose-invert max-w-none bg-card/30 backdrop-blur-sm shadow-inner"
-            v-html="markdownPreview"
-          />
+            v-html="markdownPreview" />
         </div>
       </div>
     </div>
@@ -280,4 +267,3 @@ const formatQuote = () => insertMarkdown('> ')
   margin: 2rem 0;
 }
 </style>
-

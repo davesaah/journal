@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useJournal } from '../composables/useJournal'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { 
+import {
   Card,
   CardHeader,
   CardTitle,
@@ -35,10 +35,10 @@ const renderedContent = computed(() => {
 
 const formatDate = (dateString) => {
   if (!dateString) return ''
-  const options = { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
+  const options = {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit'
@@ -54,14 +54,14 @@ const formatThoughtDate = (dateString) => {
   const diffMins = Math.floor(diffMs / 60000)
   const diffHours = Math.floor(diffMs / 3600000)
   const diffDays = Math.floor(diffMs / 8400000)
-  
+
   if (diffMins < 1) return 'just now'
   if (diffMins < 60) return `${diffMins}m ago`
   if (diffHours < 24) return `${diffHours}h ago`
   if (diffDays < 7) return `${diffDays}d ago`
-  
-  return new Date(dateString).toLocaleDateString(undefined, { 
-    month: 'short', 
+
+  return new Date(dateString).toLocaleDateString(undefined, {
+    month: 'short',
     day: 'numeric',
     year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
   })
@@ -73,7 +73,7 @@ const goBack = () => {
 
 const submitThought = async () => {
   if (!newThought.value.trim() || isSubmitting.value) return
-  
+
   isSubmitting.value = true
   const result = await addAfterthought(entry.value.id, newThought.value.trim())
   if (result.success) {
@@ -86,23 +86,23 @@ const submitThought = async () => {
 const insertMarkdown = (before, after = '') => {
   const textarea = document.getElementById('afterthought-editor')
   if (!textarea) return
-  
+
   const start = textarea.selectionStart
   const end = textarea.selectionEnd
   const selectedText = newThought.value.substring(start, end)
-  
+
   const newText = before + selectedText + after
-  const newContent = 
-    newThought.value.substring(0, start) + 
-    newText + 
+  const newContent =
+    newThought.value.substring(0, start) +
+    newText +
     newThought.value.substring(end)
-  
+
   newThought.value = newContent
-  
+
   // Set cursor position
   setTimeout(() => {
-    const newCursorPos = selectedText 
-      ? start + newText.length 
+    const newCursorPos = selectedText
+      ? start + newText.length
       : start + before.length
     textarea.focus()
     textarea.setSelectionRange(newCursorPos, newCursorPos)
@@ -142,15 +142,13 @@ const formatActions = [
     <article class="mb-12 md:mb-16">
       <div class="space-y-4 md:space-y-6 mb-8 md:mb-10">
         <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
-          <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-tight flex-1 bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/70">
+          <h1
+            class="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-tight flex-1 bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/70">
             {{ entry.title || 'Untitled Entry' }}
           </h1>
-          <span 
-            class="self-start text-[10px] uppercase tracking-widest px-3 py-1 rounded-full font-bold border"
-            :class="canEdit 
-              ? 'bg-primary/10 text-primary border-primary/20 shadow-sm shadow-primary/5' 
-              : 'bg-muted text-muted-foreground border-transparent'"
-          >
+          <span class="self-start text-[10px] uppercase tracking-widest px-3 py-1 rounded-full font-bold border" :class="canEdit
+            ? 'bg-primary/10 text-primary border-primary/20 shadow-sm shadow-primary/5'
+            : 'bg-muted text-muted-foreground border-transparent'">
             {{ entry.author_name || 'Anonymous' }}
           </span>
         </div>
@@ -160,10 +158,9 @@ const formatActions = [
         </time>
       </div>
 
-      <div 
+      <div
         class="prose prose-lg md:prose-xl dark:prose-invert max-w-none leading-relaxed text-foreground/90 selection:bg-primary/20 break-words"
-        v-html="renderedContent"
-      />
+        v-html="renderedContent" />
     </article>
 
     <!-- AfterThoughts Section -->
@@ -177,16 +174,16 @@ const formatActions = [
 
       <!-- Existing Thoughts -->
       <div v-if="entry.afterthoughts && entry.afterthoughts.length > 0" class="space-y-4 md:space-y-6 mb-8 md:mb-10">
-        <Card 
-          v-for="thought in entry.afterthoughts" 
-          :key="thought.id"
-          class="border-none bg-muted/30 backdrop-blur-sm relative overflow-hidden group hover:bg-muted/40 transition-colors"
-        >
+        <Card v-for="thought in entry.afterthoughts" :key="thought.id"
+          class="border-none bg-muted/30 backdrop-blur-sm relative overflow-hidden group hover:bg-muted/40 transition-colors">
           <div class="absolute left-0 top-0 bottom-0 w-1 bg-primary/30 group-hover:bg-primary transition-colors" />
           <CardContent class="py-4 px-6 md:py-6 md:px-8">
-            <div class="prose md:prose-lg dark:prose-invert max-w-none text-foreground/80 leading-relaxed italic text-sm md:text-base" v-html="marked(thought.content)" />
-            <div class="flex items-center gap-2 mt-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40">
-               <span>— {{ formatThoughtDate(thought.created_at) }}</span>
+            <div
+              class="prose md:prose-lg dark:prose-invert max-w-none text-foreground/80 leading-relaxed italic text-sm md:text-base"
+              v-html="marked(thought.content)" />
+            <div
+              class="flex items-center gap-2 mt-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40">
+              <span>— {{ formatThoughtDate(thought.created_at) }}</span>
             </div>
           </CardContent>
         </Card>
@@ -195,42 +192,34 @@ const formatActions = [
       <!-- Add New Thought - Only for own entries -->
       <div v-if="canEdit" class="space-y-4 animate-in slide-in-from-bottom-4 duration-500">
         <div class="flex flex-wrap gap-1 p-1.5 border border-primary/5 rounded-xl bg-muted/20 backdrop-blur-sm">
-          <Button 
-            v-for="action in formatActions" 
-            :key="action.label"
-            variant="ghost" 
-            size="sm" 
-            @click="action.handler"
-            class="h-9 w-9 p-0 hover:bg-primary/10 hover:text-primary transition-colors"
-            :title="action.label"
-          >
+          <Button v-for="action in formatActions" :key="action.label" variant="ghost" size="sm" @click="action.handler"
+            class="h-9 w-9 p-0 hover:bg-primary/10 hover:text-primary transition-colors" :title="action.label">
             <component :is="action.icon" class="w-4 h-4" />
           </Button>
         </div>
 
-        <Textarea 
-          id="afterthought-editor"
-          v-model="newThought" 
-          placeholder="Reflect on this entry..."
+        <Textarea id="afterthought-editor" v-model="newThought" placeholder="Reflect on this entry..."
           class="min-h-[120px] resize-none font-sans text-base md:text-lg border-none focus-visible:ring-1 focus-visible:ring-primary/20 bg-muted/10 rounded-2xl p-5 md:p-6"
-          @keydown.ctrl.enter="submitThought"
-          @keydown.meta.enter="submitThought"
-        />
+          @keydown.ctrl.enter="submitThought" @keydown.meta.enter="submitThought" />
         <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
           <p class="hidden sm:block text-xs font-medium text-muted-foreground/50 italic px-2">Ctrl + Enter to submit</p>
-          <Button @click="submitThought" class="w-full sm:w-auto gap-2 px-8 h-12 rounded-full shadow-lg shadow-primary/10 font-bold" :disabled="!newThought.trim() || isSubmitting">
-            <component :is="isSubmitting ? Loader2 : Send" class="w-4 h-4" :class="isSubmitting ? 'animate-spin' : ''" />
+          <Button @click="submitThought"
+            class="w-full sm:w-auto gap-2 px-8 h-12 rounded-full shadow-lg shadow-primary/10 font-bold"
+            :disabled="!newThought.trim() || isSubmitting">
+            <component :is="isSubmitting ? Loader2 : Send" class="w-4 h-4"
+              :class="isSubmitting ? 'animate-spin' : ''" />
             Add Thought
           </Button>
         </div>
       </div>
-      
-      <div v-else-if="!entry.afterthoughts || entry.afterthoughts.length === 0" class="text-center py-12 text-muted-foreground/40 italic text-sm">
+
+      <div v-else-if="!entry.afterthoughts || entry.afterthoughts.length === 0"
+        class="text-center py-12 text-muted-foreground/40 italic text-sm">
         No afterthoughts have been shared yet.
       </div>
     </section>
   </div>
-  
+
   <div v-else-if="loading" class="flex flex-col items-center justify-center min-h-[70vh] p-4 text-center">
     <Loader2 class="w-12 h-12 text-primary animate-spin mb-4" />
     <p class="text-muted-foreground animate-pulse">Gathering memories...</p>
@@ -238,11 +227,12 @@ const formatActions = [
 
   <div v-else class="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-6 p-4">
     <div class="p-6 rounded-full bg-destructive/5 text-destructive">
-       <ArrowLeft class="w-12 h-12" />
+      <ArrowLeft class="w-12 h-12" />
     </div>
     <div class="space-y-2">
       <h3 class="text-xl md:text-2xl font-bold">Entry not found</h3>
-      <p class="text-muted-foreground text-sm md:text-base">The entry you're looking for might have been removed or moved.</p>
+      <p class="text-muted-foreground text-sm md:text-base">The entry you're looking for might have been removed or
+        moved.</p>
     </div>
     <Button size="lg" @click="goBack" variant="outline" class="w-full sm:w-auto px-8">Return to Journal</Button>
   </div>
